@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Version tag (e.g. v0.1.0)"
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux-x86_64,        os: ubuntu-latest,  target: x86_64-unknown-linux-gnu,  bin: zegion }
+          - { name: linux-aarch64,       os: ubuntu-latest,  target: aarch64-unknown-linux-gnu, bin: zegion }
+          - { name: windows-x86_64,      os: windows-latest, target: x86_64-pc-windows-msvc,    bin: zegion.exe }
+          - { name: macos-x86_64,        os: macos-latest,   target: x86_64-apple-darwin,       bin: zegion }
+          - { name: macos-aarch64,       os: macos-latest,   target: aarch64-apple-darwin,      bin: zegion }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install cross (aarch64 linux)
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+          cargo install cross --locked || true
+
+      - name: Build
+        shell: bash
+        run: |
+          if [ "${{ matrix.target }}" = "aarch64-unknown-linux-gnu" ] && command -v cross >/dev/null 2>&1; then
+            cross build --release --target ${{ matrix.target }} --bin zegion
+          else
+            cargo build --release --target ${{ matrix.target }} --bin zegion
+          fi
+
+      - name: Package
+        shell: bash
+        run: |
+          mkdir -p dist
+          BIN=target/${{ matrix.target }}/release/${{ matrix.bin }}
+          NAME=zegion-${{ matrix.name }}
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            7z a dist/$NAME.zip "$BIN"
+          else
+            tar -czf dist/$NAME.tar.gz -C target/${{ matrix.target }}/release ${{ matrix.bin }}
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zegion-${{ matrix.name }}
+          path: dist/*
+          retention-days: 14
+
+  release:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/download@v4
+        with:
+          pattern: zegion-*
+          merge-multiple: true
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          gh release create "$TAG" \
+            --title "Zegion $TAG" \
+            --generate-notes \
+            zegion-*.tar.gz zegion-*.zip

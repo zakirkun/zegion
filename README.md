@@ -1,78 +1,124 @@
-# Zegion
-
-A low-spec-friendly autonomous agent written in Rust on top of [`aisdk`](https://aisdk.rs).
-Zegion has a persona (`PERSONAL.md`), strong local memory (SQLite + sqlite-vec + FTS5),
-a skills system, rich tooling, a plugin system, and a multi-channel gateway.
-
-## Features
-
-- **Persona-driven** — `PERSONAL.md` is loaded at startup and injected into the system prompt.
-- **Local-first memory** — episodic, semantic, and reflection layers in SQLite; vector
-  recall via `sqlite-vec`, keyword recall via FTS5. Nothing leaves your machine.
-- **Multi-provider** — OpenRouter, OpenAI, Anthropic, Google, Ollama, and any
-  OpenAI-compatible endpoint, selectable via config (runtime `DynamicModel`).
-- **Skills system** — drop markdown files into `skills/` to teach reusable procedures.
-- **Tools** — built-in `now`, `calc`; gated `shell` / `write_file` / `http_get` behind
-  supervised approval.
-- **Plugins** — Rhai scripts in `plugins/` plus MCP servers (via `rmcp`) launched as child
-  processes; their tools are auto-discovered and exposed to the agent namespaced as
-  `<server>__<tool>`.
-- **Channels** — CLI REPL, a local HTTP/SSE gateway, Telegram (long polling), Discord
-  (gateway websocket), Slack (socket mode), and WhatsApp (Cloud API webhook), all behind
-  the same `Channel` trait.
-- **Streaming** — `Agent::turn_stream` emits text deltas as they arrive via aisdk
-  `stream_text`, for live-typing channel UX.
-
-## Layout
+<div align="center">
 
 ```
-crates/
-  zegion-core      persona, config, agent loop, skills, tools, plugins, gateway
-  zegion-memory    SQLite + sqlite-vec + FTS5 store (episodic/semantic/reflection)
-  zegion-channels  CLI channel + Channel trait impls
-  zegion-cli       the `zegion` binary
-PERSONAL.md        the agent's persona
-zegion.example.toml config template (copy to zegion.toml)
-skills/            markdown skills
-plugins/           rhai script plugins
-data/              runtime SQLite db (gitignored)
+ _____          _
+|__  /___  __ _(_) ___  _ __
+  / // _ \/ _` | |/ _ \| '_ \
+ / /|  __/ (_| | | (_) | | | |
+/____\___|\__, |_|\___/|_| |_|
+          |___/
+```
+
+# Zegion
+
+**A low-spec, local-first autonomous agent written in Rust.**
+
+Persona-driven, persistent memory, multi-channel, extensible via tools, skills, plugins, and MCP.
+
+[![CI](https://github.com/zakirkun/zegion/actions/workflows/ci.yml/badge.svg)](https://github.com/zakirkun/zegion/actions/workflows/ci.yml)
+[![Release](https://github.com/zakirkun/zegion/actions/workflows/release.yml/badge.svg)](https://github.com/zakirkun/zegion/actions/workflows/release.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+</div>
+
+---
+
+## Overview
+
+Zegion is a general-purpose autonomous agent designed to run comfortably on modest hardware.
+It pairs a single persistent persona (`PERSONAL.md`) with a local memory store (SQLite +
+sqlite-vec + FTS5), a rich tool set, and a pluggable channel system so it can meet users where
+they already are — terminal, Telegram, Discord, Slack, WhatsApp, or a local HTTP/SSE gateway.
+
+Every LLM call flows through an optimization pipeline (retry, response cache, guardrails), and
+capabilities (skills, tools, plugins, MCP servers) are auto-discovered and hot-reloaded.
+
+## Key features
+
+- **Persona-driven** — `PERSONAL.md` defines identity, tone, and boundaries; injected into every prompt.
+- **Local-first memory** — episodic, semantic, and reflection layers; vector + keyword recall; sliding-window context; background consolidation worker. Nothing leaves the machine.
+- **Multi-provider** — OpenRouter, OpenAI, Anthropic, Google, Ollama, and any OpenAI-compatible endpoint, selected at runtime via config.
+- **Multi-channel** — CLI REPL, HTTP/SSE gateway, Telegram (teloxide), Discord (serenity), Slack (socket mode), WhatsApp (Cloud API).
+- **Rich tooling** — 20+ built-in tools, gated sensitive actions with in-chat approval.
+- **Skills** — markdown procedures auto-loaded from `skills/` (16 included).
+- **Plugins** — Rhai scripts in `plugins/` (11 included) plus a sandboxed WASM tool runtime.
+- **MCP** — connect MCP servers as child processes; tools auto-discovered and namespaced (5 presets).
+- **Optimization & safety** — LLM pipeline (retry, cache, guardrails) on every inference; multi-agent pub/sub orchestrator.
+
+## Install
+
+**Prebuilt binaries** (Linux, macOS, Windows):
+
+```sh
+# Linux / macOS
+curl -fsSL https://raw.githubusercontent.com/zakirkun/zegion/main/install.sh | bash
+
+# Windows (PowerShell)
+irm https://raw.githubusercontent.com/zakirkun/zegion/main/install.ps1 | iex
+```
+
+**From source** (Rust 1.85+):
+
+```sh
+git clone https://github.com/zakirkun/zegion
+cd zegion
+cargo build --release
 ```
 
 ## Quick start
 
 ```sh
-cp zegion.example.toml zegion.toml
-# set API keys via env (see zegion.example.toml) or edit zegion.toml
-$env:OPENROUTER_API_KEY="..."
-
-cargo run -- run                 # start CLI + gateway
-cargo run -- recall "dark mode"  # search memory
-cargo run -- learn "user prefers concise answers"
+zegion onboard     # interactive TUI wizard → writes zegion.toml
+# set your provider key, e.g.:
+export OPENROUTER_API_KEY=...        # Windows: $env:OPENROUTER_API_KEY="..."
+zegion run         # start the agent (CLI + enabled channels)
 ```
 
-The gateway listens on `http://127.0.0.1:8787`:
+Other commands:
+
+```sh
+zegion run                        # chat + gateway + enabled channels
+zegion recall "dark mode"         # search memory
+zegion learn "user prefers terse answers"
+zegion config                     # print resolved configuration
+```
+
+The local gateway listens on `http://127.0.0.1:8787`:
+
 - `GET  /health`
-- `POST /v1/chat`   `{ "text": "hi", "user_id": "me" }`
+- `POST /v1/chat`  `{ "text": "hi", "user_id": "me" }`
 - `GET  /v1/events` (SSE stream of agent replies)
 
-## Roadmap
+## Documentation
 
-- [x] Sensitive tools (`shell`, `write_file`) gated by per-channel approval in the agent loop
-- [x] `memory_recall` / `memory_store` agent-facing tools
-- [x] Memory consolidation + reflection background worker (uses `worker` model)
-- [x] Telegram channel (long polling, no public URL needed)
-- [x] MCP client tool bridging (child-process servers, tool discovery + namespaced calls)
-- [x] Discord channel (gateway websocket + REST send)
-- [x] Slack channel (socket mode + chat.postMessage)
-- [x] WhatsApp channel (Cloud API webhook + Graph API send)
-- [x] Streaming responses (`Agent::turn_stream` text deltas via aisdk `stream_text`)
-- [x] Stream deltas wired into live channel edits (Telegram/Discord message edit)
-- [x] ReAct + structured-output executors (`zegion-core/react.rs`)
-- [x] `#[zegion_tool]` derive macro (tool + output-schema) (`zegion-macros`)
-- [x] Sandboxed WASM tool execution (wasmtime, fuel + memory capped) (`zegion-core/sandbox.rs`)
-- [x] Extensible memory backends + sliding-window memory (`zegion-memory/backend.rs`)
-- [x] LLM guardrails (input/output, sensitive-data + length) (`zegion-core/guardrails.rs`)
-- [x] LLM optimization pipeline (retry, response cache, guardrail stage) (`zegion-core/pipeline.rs`)
-- [x] Multi-agent orchestration: typed pub/sub bus + environment (`zegion-core/orchestrator.rs`)
-- [x] Pipeline (retry + cache + guardrails) wired into every inference (main + worker)
-- [ ] Release binary size tuning for low-spec targets
+- [Architecture](docs/architecture.md)
+- [Configuration](docs/configuration.md)
+- [Channels](docs/channels.md)
+- [Tools](docs/tools.md)
+- [Skills](docs/skills.md)
+- [Plugins & WASM](docs/plugins.md)
+- [MCP](docs/mcp.md)
+- [Memory](docs/memory.md)
+- [Extending: register your own skills, plugins & MCP](docs/extending.md)
+
+Project: [TODO](TODO.md) · [Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md)
+
+## Workspace layout
+
+```
+crates/
+  zegion-core      persona, config, agent loop, tools, skills, plugins, MCP,
+                   guardrails, pipeline, orchestrator, sandbox, gateway
+  zegion-memory    SQLite + sqlite-vec + FTS5 store, backend trait, sliding window
+  zegion-channels  CLI + Telegram/Discord/Slack/WhatsApp channel impls
+  zegion-macros    #[zegion_tool] derive macro
+  zegion-cli       the `zegion` binary (run / onboard / learn / recall / config)
+PERSONAL.md        the agent's persona
+skills/            markdown skills (auto-loaded)
+plugins/           rhai plugin scripts (auto-loaded)
+docs/              documentation
+```
+
+## Contributing & license
+
+Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Licensed under [MIT](LICENSE).
