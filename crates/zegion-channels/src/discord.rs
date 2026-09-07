@@ -1,7 +1,5 @@
 use async_trait::async_trait;
-use serenity::all::{
-    ChannelId, Context, EditMessage, EventHandler, GatewayIntents, Message,
-};
+use serenity::all::{ChannelId, Context, EditMessage, EventHandler, GatewayIntents, Message};
 use serenity::Client;
 use tokio::sync::mpsc;
 use zegion_core::channel::{Channel, IncomingMessage, OutgoingMessage};
@@ -103,7 +101,11 @@ impl Channel for DiscordChannel {
             .parse()
             .map_err(|_| Error::Channel(format!("invalid discord message id `{handle}`")))?;
         let trimmed: String = text.chars().take(1900).collect();
-        let content = if trimmed.is_empty() { "…".to_string() } else { trimmed };
+        let content = if trimmed.is_empty() {
+            "…".to_string()
+        } else {
+            trimmed
+        };
         ChannelId::new(channel_id)
             .edit_message(
                 &self.http,

@@ -15,10 +15,7 @@ pub fn zegion_tool(attr: TokenStream, item: TokenStream) -> TokenStream {
     let attrs = &input.attrs;
 
     let fn_name = &sig.ident;
-    let output_schema_fn = syn::Ident::new(
-        &format!("{}_output_schema", fn_name),
-        fn_name.span(),
-    );
+    let output_schema_fn = syn::Ident::new(&format!("{}_output_schema", fn_name), fn_name.span());
 
     let return_ty = match &sig.output {
         ReturnType::Type(_, ty) => quote!(#ty),

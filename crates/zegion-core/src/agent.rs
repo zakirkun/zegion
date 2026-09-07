@@ -8,7 +8,9 @@ use crate::config::Config;
 use crate::error::Result;
 use crate::hooks::ApprovalGate;
 use crate::persona::Persona;
-use crate::provider::{build_embedding_model, build_language_model, AnyEmbeddingModel, AnyLanguageModel};
+use crate::provider::{
+    build_embedding_model, build_language_model, AnyEmbeddingModel, AnyLanguageModel,
+};
 use crate::skills::SkillRegistry;
 use crate::tools::{build_tools, ToolContext};
 
@@ -184,7 +186,11 @@ impl Agent {
 
     /// Handle one user turn and produce the assistant's reply text, using the given
     /// approval gate to control sensitive tools.
-    pub async fn turn_with_gate(&mut self, user_text: &str, gate: Arc<ApprovalGate>) -> Result<String> {
+    pub async fn turn_with_gate(
+        &mut self,
+        user_text: &str,
+        gate: Arc<ApprovalGate>,
+    ) -> Result<String> {
         let recalled = self.recall(user_text).await;
         let system = self.system_prompt(&recalled);
         let mut messages = self.window_messages();
@@ -204,7 +210,9 @@ impl Agent {
             builder = builder.with_tool(t);
         }
         let mut req = builder
-            .stop_when(aisdk::core::utils::step_count_is(self.config.agent.max_steps))
+            .stop_when(aisdk::core::utils::step_count_is(
+                self.config.agent.max_steps,
+            ))
             .build();
 
         let response = req
@@ -252,7 +260,9 @@ impl Agent {
             builder = builder.with_tool(t);
         }
         let mut req = builder
-            .stop_when(aisdk::core::utils::step_count_is(self.config.agent.max_steps))
+            .stop_when(aisdk::core::utils::step_count_is(
+                self.config.agent.max_steps,
+            ))
             .build();
 
         let response = req

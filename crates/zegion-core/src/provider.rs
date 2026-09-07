@@ -1,8 +1,6 @@
 use std::pin::Pin;
 
-use aisdk::core::capabilities::{
-    StructuredOutputSupport, TextInputSupport, ToolCallSupport,
-};
+use aisdk::core::capabilities::{StructuredOutputSupport, TextInputSupport, ToolCallSupport};
 use aisdk::core::language_model::{LanguageModelOptions, LanguageModelResponse};
 use aisdk::core::{DynamicModel, EmbeddingModel, LanguageModel};
 use aisdk::providers::{Anthropic, Google, OpenAI, OpenAICompatible, Openrouter};
@@ -61,7 +59,15 @@ impl LanguageModel for AnyLanguageModel {
         &mut self,
         options: LanguageModelOptions,
     ) -> aisdk::Result<
-        Pin<Box<dyn Stream<Item = aisdk::Result<Vec<aisdk::core::language_model::LanguageModelStreamChunk>>> + Send>>,
+        Pin<
+            Box<
+                dyn Stream<
+                        Item = aisdk::Result<
+                            Vec<aisdk::core::language_model::LanguageModelStreamChunk>,
+                        >,
+                    > + Send,
+            >,
+        >,
     > {
         match &self.inner {
             AnyLm::OpenAI(m) => m.clone().stream_text(options).await,

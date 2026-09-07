@@ -18,7 +18,11 @@ pub fn builtin_mcp_presets() -> Vec<McpServerConfig> {
         McpServerConfig {
             name: "filesystem".into(),
             command: "npx".into(),
-            args: vec!["-y".into(), "@modelcontextprotocol/server-filesystem".into(), ".".into()],
+            args: vec![
+                "-y".into(),
+                "@modelcontextprotocol/server-filesystem".into(),
+                ".".into(),
+            ],
         },
         McpServerConfig {
             name: "git".into(),
@@ -28,7 +32,11 @@ pub fn builtin_mcp_presets() -> Vec<McpServerConfig> {
         McpServerConfig {
             name: "sqlite".into(),
             command: "uvx".into(),
-            args: vec!["mcp-server-sqlite".into(), "--db-path".into(), "data/zegion.db".into()],
+            args: vec![
+                "mcp-server-sqlite".into(),
+                "--db-path".into(),
+                "data/zegion.db".into(),
+            ],
         },
         McpServerConfig {
             name: "fetch".into(),
@@ -64,8 +72,12 @@ impl CapabilityRegistry {
         let skills_dir = skills_dir.into();
         let plugins_dir = plugins_dir.into();
 
-        let skills = SkillRegistry::load_from_dir(&skills_dir).await.unwrap_or_default();
-        let plugins = PluginRegistry::load_from_dir(&plugins_dir).await.unwrap_or_default();
+        let skills = SkillRegistry::load_from_dir(&skills_dir)
+            .await
+            .unwrap_or_default();
+        let plugins = PluginRegistry::load_from_dir(&plugins_dir)
+            .await
+            .unwrap_or_default();
 
         let mut mcp_all: Vec<McpServerConfig> = mcp_configs.to_vec();
         if auto_presets {

@@ -2,9 +2,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 
-use aisdk::core::language_model::{
-    LanguageModel, LanguageModelOptions, LanguageModelResponse,
-};
+use aisdk::core::language_model::{LanguageModel, LanguageModelOptions, LanguageModelResponse};
 use zegion_core::pipeline::{Pipeline, ResponseCache, RetryPolicy};
 
 #[derive(Debug, Clone)]
@@ -44,7 +42,13 @@ impl LanguageModel for FakeModel {
         _options: LanguageModelOptions,
     ) -> aisdk::Result<
         std::pin::Pin<
-            Box<dyn futures::Stream<Item = aisdk::Result<Vec<aisdk::core::language_model::LanguageModelStreamChunk>>> + Send>,
+            Box<
+                dyn futures::Stream<
+                        Item = aisdk::Result<
+                            Vec<aisdk::core::language_model::LanguageModelStreamChunk>,
+                        >,
+                    > + Send,
+            >,
         >,
     > {
         unimplemented!()
@@ -84,7 +88,13 @@ async fn resolved_options(text: &str) -> LanguageModelOptions {
             _o: LanguageModelOptions,
         ) -> aisdk::Result<
             std::pin::Pin<
-                Box<dyn futures::Stream<Item = aisdk::Result<Vec<aisdk::core::language_model::LanguageModelStreamChunk>>> + Send>,
+                Box<
+                    dyn futures::Stream<
+                            Item = aisdk::Result<
+                                Vec<aisdk::core::language_model::LanguageModelStreamChunk>,
+                            >,
+                        > + Send,
+                >,
             >,
         > {
             unimplemented!()
@@ -138,7 +148,11 @@ async fn pipeline_caches_identical_requests() {
     let r2 = pipeline.generate_optimized(b).await.unwrap();
 
     assert_eq!(response_text(&r1), response_text(&r2));
-    assert_eq!(calls.load(Ordering::SeqCst), 1, "second identical call should hit cache");
+    assert_eq!(
+        calls.load(Ordering::SeqCst),
+        1,
+        "second identical call should hit cache"
+    );
 }
 
 #[tokio::test(flavor = "multi_thread")]

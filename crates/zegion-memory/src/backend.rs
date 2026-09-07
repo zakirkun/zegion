@@ -15,8 +15,11 @@ pub trait MemoryBackend: Send + Sync {
     async fn insert(&self, memory: &Memory) -> anyhow::Result<()>;
     async fn set_embedding(&self, id: Uuid, embedding: Vec<f32>) -> anyhow::Result<()>;
     async fn recall_keyword(&self, query: &str, limit: usize) -> anyhow::Result<Vec<ScoredMemory>>;
-    async fn recall_vector(&self, query_embedding: Vec<f32>, limit: usize)
-        -> anyhow::Result<Vec<ScoredMemory>>;
+    async fn recall_vector(
+        &self,
+        query_embedding: Vec<f32>,
+        limit: usize,
+    ) -> anyhow::Result<Vec<ScoredMemory>>;
     async fn recent_episodic(&self, limit: usize) -> anyhow::Result<Vec<Memory>>;
     async fn clear_episodic(&self) -> anyhow::Result<usize>;
     async fn count(&self, kind: MemoryKind) -> anyhow::Result<usize>;

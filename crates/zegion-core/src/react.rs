@@ -12,7 +12,9 @@ pub struct ReactExecutor {
 
 impl ReactExecutor {
     pub fn new(max_steps: usize) -> Self {
-        Self { max_steps: max_steps.max(1) }
+        Self {
+            max_steps: max_steps.max(1),
+        }
     }
 
     pub async fn execute<M>(
@@ -50,11 +52,7 @@ impl ReactExecutor {
 pub struct StructuredExecutor;
 
 impl StructuredExecutor {
-    pub async fn execute<M, T>(
-        model: M,
-        system: String,
-        prompt: String,
-    ) -> Result<T>
+    pub async fn execute<M, T>(model: M, system: String, prompt: String) -> Result<T>
     where
         M: LanguageModel
             + aisdk::core::capabilities::StructuredOutputSupport

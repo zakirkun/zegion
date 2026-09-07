@@ -76,14 +76,38 @@ impl App {
         Self {
             step: Step::Welcome,
             providers: vec![
-                ProviderRow { name: "openrouter", env: "OPENROUTER_API_KEY", enabled: true },
-                ProviderRow { name: "openai", env: "OPENAI_API_KEY", enabled: false },
-                ProviderRow { name: "anthropic", env: "ANTHROPIC_API_KEY", enabled: false },
-                ProviderRow { name: "google", env: "GOOGLE_API_KEY", enabled: false },
+                ProviderRow {
+                    name: "openrouter",
+                    env: "OPENROUTER_API_KEY",
+                    enabled: true,
+                },
+                ProviderRow {
+                    name: "openai",
+                    env: "OPENAI_API_KEY",
+                    enabled: false,
+                },
+                ProviderRow {
+                    name: "anthropic",
+                    env: "ANTHROPIC_API_KEY",
+                    enabled: false,
+                },
+                ProviderRow {
+                    name: "google",
+                    env: "GOOGLE_API_KEY",
+                    enabled: false,
+                },
             ],
             channels: vec![
-                ChannelRow { name: "telegram", enabled: false, fields: vec![("bot_token", "${TELEGRAM_BOT_TOKEN}".into())] },
-                ChannelRow { name: "discord", enabled: false, fields: vec![("bot_token", "${DISCORD_BOT_TOKEN}".into())] },
+                ChannelRow {
+                    name: "telegram",
+                    enabled: false,
+                    fields: vec![("bot_token", "${TELEGRAM_BOT_TOKEN}".into())],
+                },
+                ChannelRow {
+                    name: "discord",
+                    enabled: false,
+                    fields: vec![("bot_token", "${DISCORD_BOT_TOKEN}".into())],
+                },
                 ChannelRow {
                     name: "slack",
                     enabled: false,
@@ -123,14 +147,23 @@ impl App {
             cfg.providers.insert(p.name.to_string(), entry);
         }
 
-        cfg.channels.insert("cli".into(), ChannelConfig { enabled: true, ..Default::default() });
+        cfg.channels.insert(
+            "cli".into(),
+            ChannelConfig {
+                enabled: true,
+                ..Default::default()
+            },
+        );
         cfg.channels.insert(
             "gateway".into(),
             ChannelConfig {
                 enabled: true,
-                extra: [("bind".to_string(), toml::Value::String("127.0.0.1:8787".into()))]
-                    .into_iter()
-                    .collect(),
+                extra: [(
+                    "bind".to_string(),
+                    toml::Value::String("127.0.0.1:8787".into()),
+                )]
+                .into_iter()
+                .collect(),
             },
         );
 
@@ -142,7 +175,10 @@ impl App {
                 .collect();
             cfg.channels.insert(
                 ch.name.to_string(),
-                ChannelConfig { enabled: true, extra },
+                ChannelConfig {
+                    enabled: true,
+                    extra,
+                },
             );
         }
         cfg
@@ -302,7 +338,9 @@ fn draw_header(f: &mut Frame, area: Rect, app: &App) {
     let idx = step_index(app.step);
     let mut spans = vec![Span::styled(
         " Zegion Onboarding  ",
-        Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD),
+        Style::default()
+            .fg(Color::Cyan)
+            .add_modifier(Modifier::BOLD),
     )];
     for (i, title) in STEP_TITLES.iter().enumerate() {
         let style = if i == idx {
@@ -329,17 +367,28 @@ fn draw_body(f: &mut Frame, area: Rect, app: &App) {
         Step::Welcome => {
             let text = vec![
                 Line::from(""),
-                Line::from(Span::styled("Welcome to Zegion setup.", Style::default().add_modifier(Modifier::BOLD))),
+                Line::from(Span::styled(
+                    "Welcome to Zegion setup.",
+                    Style::default().add_modifier(Modifier::BOLD),
+                )),
                 Line::from(""),
                 Line::from("This wizard generates a zegion.toml for you."),
                 Line::from(""),
-                Line::from("- Secrets stay as ${ENV} placeholders; keys are never written to disk."),
+                Line::from(
+                    "- Secrets stay as ${ENV} placeholders; keys are never written to disk.",
+                ),
                 Line::from("- Toggle items with Space, move with Up/Down or j/k."),
                 Line::from("- Tab/Right advances, BackTab/Left goes back, q quits."),
                 Line::from(""),
-                Line::from(Span::styled("Press Enter to begin.", Style::default().fg(Color::Green))),
+                Line::from(Span::styled(
+                    "Press Enter to begin.",
+                    Style::default().fg(Color::Green),
+                )),
             ];
-            f.render_widget(Paragraph::new(text).block(block).wrap(Wrap { trim: true }), area);
+            f.render_widget(
+                Paragraph::new(text).block(block).wrap(Wrap { trim: true }),
+                area,
+            );
         }
         Step::Providers => {
             let items: Vec<ListItem> = app
@@ -352,7 +401,11 @@ fn draw_body(f: &mut Frame, area: Rect, app: &App) {
                 .collect();
             let list = List::new(items)
                 .block(block)
-                .highlight_style(Style::default().bg(Color::DarkGray).add_modifier(Modifier::BOLD))
+                .highlight_style(
+                    Style::default()
+                        .bg(Color::DarkGray)
+                        .add_modifier(Modifier::BOLD),
+                )
                 .highlight_symbol("> ");
             let mut state = ListState::default();
             state.select(Some(app.list_index));
@@ -376,7 +429,10 @@ fn draw_body(f: &mut Frame, area: Rect, app: &App) {
                     Style::default().fg(Color::DarkGray),
                 )),
             ];
-            f.render_widget(Paragraph::new(text).block(block).wrap(Wrap { trim: true }), area);
+            f.render_widget(
+                Paragraph::new(text).block(block).wrap(Wrap { trim: true }),
+                area,
+            );
         }
         Step::Channels => {
             let items: Vec<ListItem> = app
@@ -384,13 +440,22 @@ fn draw_body(f: &mut Frame, area: Rect, app: &App) {
                 .iter()
                 .map(|c| {
                     let mark = if c.enabled { "[x]" } else { "[ ]" };
-                    let detail = c.fields.iter().map(|(k, _)| *k).collect::<Vec<_>>().join(", ");
+                    let detail = c
+                        .fields
+                        .iter()
+                        .map(|(k, _)| *k)
+                        .collect::<Vec<_>>()
+                        .join(", ");
                     ListItem::new(format!("{mark} {:<10} ({detail})", c.name))
                 })
                 .collect();
             let list = List::new(items)
                 .block(block)
-                .highlight_style(Style::default().bg(Color::DarkGray).add_modifier(Modifier::BOLD))
+                .highlight_style(
+                    Style::default()
+                        .bg(Color::DarkGray)
+                        .add_modifier(Modifier::BOLD),
+                )
                 .highlight_symbol("> ");
             let mut state = ListState::default();
             state.select(Some(app.list_index));
@@ -400,23 +465,41 @@ fn draw_body(f: &mut Frame, area: Rect, app: &App) {
             let cfg = app.build_config();
             let lines = vec![
                 Line::from(""),
-                Line::from(Span::styled("Summary", Style::default().add_modifier(Modifier::BOLD))),
+                Line::from(Span::styled(
+                    "Summary",
+                    Style::default().add_modifier(Modifier::BOLD),
+                )),
                 Line::from(""),
-                Line::from(format!("Providers: {}", cfg.providers.keys().cloned().collect::<Vec<_>>().join(", "))),
-                Line::from(format!("Model:     {}/{}", cfg.models.default_provider, cfg.models.default_model)),
-                Line::from(format!("Channels:  {}", cfg.channels.keys().cloned().collect::<Vec<_>>().join(", "))),
+                Line::from(format!(
+                    "Providers: {}",
+                    cfg.providers.keys().cloned().collect::<Vec<_>>().join(", ")
+                )),
+                Line::from(format!(
+                    "Model:     {}/{}",
+                    cfg.models.default_provider, cfg.models.default_model
+                )),
+                Line::from(format!(
+                    "Channels:  {}",
+                    cfg.channels.keys().cloned().collect::<Vec<_>>().join(", ")
+                )),
                 Line::from(""),
                 Line::from(Span::styled(
                     "Press Tab/Enter to write the config, or BackTab to go back.",
                     Style::default().fg(Color::Green),
                 )),
             ];
-            f.render_widget(Paragraph::new(lines).block(block).wrap(Wrap { trim: true }), area);
+            f.render_widget(
+                Paragraph::new(lines).block(block).wrap(Wrap { trim: true }),
+                area,
+            );
         }
         Step::Done => {
             let text = vec![
                 Line::from(""),
-                Line::from(Span::styled("Done! Writing config...", Style::default().fg(Color::Green))),
+                Line::from(Span::styled(
+                    "Done! Writing config...",
+                    Style::default().fg(Color::Green),
+                )),
             ];
             f.render_widget(Paragraph::new(text).block(block), area);
         }
@@ -426,7 +509,9 @@ fn draw_body(f: &mut Frame, area: Rect, app: &App) {
 fn draw_footer(f: &mut Frame, area: Rect, app: &App) {
     let hint = match app.step {
         Step::Welcome => "Enter: begin   q: quit",
-        Step::Providers | Step::Channels => "Space: toggle   Up/Down: move   Tab: next   BackTab: back   q: quit",
+        Step::Providers | Step::Channels => {
+            "Space: toggle   Up/Down: move   Tab: next   BackTab: back   q: quit"
+        }
         Step::Models => "e: edit   Tab: next   BackTab: back   q: quit",
         Step::Review => "Tab/Enter: write config   BackTab: back   q: quit",
         Step::Done => "",

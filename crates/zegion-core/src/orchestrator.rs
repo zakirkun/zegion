@@ -16,7 +16,11 @@ pub struct Envelope {
 }
 
 impl Envelope {
-    pub fn new<T: Any + Send + Sync>(topic: impl Into<String>, from: impl Into<String>, payload: T) -> Self {
+    pub fn new<T: Any + Send + Sync>(
+        topic: impl Into<String>,
+        from: impl Into<String>,
+        payload: T,
+    ) -> Self {
         Self {
             topic: topic.into(),
             from: from.into(),

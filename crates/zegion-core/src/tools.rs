@@ -202,7 +202,9 @@ fn shell_tool(ctx: &ToolContext) -> Tool {
     let gate = ctx.gate.clone();
     Tool {
         name: "shell".into(),
-        description: "Run a shell command and return its stdout/stderr. Sensitive: requires user approval.".into(),
+        description:
+            "Run a shell command and return its stdout/stderr. Sensitive: requires user approval."
+                .into(),
         input_schema: schema_for!(ShellInput),
         execute: ToolExecute::new(Box::new(move |params: Value| {
             let command = arg_str(&params, "command")?.to_string();
@@ -319,20 +321,25 @@ struct JsonQueryInput {
 }
 
 fn json_query() -> Tool {
-    simple_tool!("json_query", "Extract a value from a JSON string by dot path (e.g. a.b.0.c).", JsonQueryInput, |params: Value| {
-        let json = arg_str(&params, "json")?;
-        let path = arg_str(&params, "path")?;
-        let doc: Value = serde_json::from_str(json).map_err(|e| e.to_string())?;
-        let mut cur = &doc;
-        for part in path.split('.') {
-            cur = if let Ok(idx) = part.parse::<usize>() {
-                cur.get(idx).ok_or("path not found")?
-            } else {
-                cur.get(part).ok_or("path not found")?
-            };
+    simple_tool!(
+        "json_query",
+        "Extract a value from a JSON string by dot path (e.g. a.b.0.c).",
+        JsonQueryInput,
+        |params: Value| {
+            let json = arg_str(&params, "json")?;
+            let path = arg_str(&params, "path")?;
+            let doc: Value = serde_json::from_str(json).map_err(|e| e.to_string())?;
+            let mut cur = &doc;
+            for part in path.split('.') {
+                cur = if let Ok(idx) = part.parse::<usize>() {
+                    cur.get(idx).ok_or("path not found")?
+                } else {
+                    cur.get(part).ok_or("path not found")?
+                };
+            }
+            serde_json::to_string_pretty(cur).map_err(|e| e.to_string())
         }
-        serde_json::to_string_pretty(cur).map_err(|e| e.to_string())
-    })
+    )
 }
 
 #[derive(Deserialize, schemars::JsonSchema)]
@@ -342,11 +349,20 @@ struct UuidInput {
 }
 
 fn uuid_gen() -> Tool {
-    simple_tool!("uuid", "Generate one or more random UUID v4 identifiers.", UuidInput, |params: Value| {
-        let n = params.get("count").and_then(Value::as_u64).unwrap_or(1).clamp(1, 100);
-        let ids: Vec<String> = (0..n).map(|_| uuid::Uuid::new_v4().to_string()).collect();
-        Ok(ids.join("\n"))
-    })
+    simple_tool!(
+        "uuid",
+        "Generate one or more random UUID v4 identifiers.",
+        UuidInput,
+        |params: Value| {
+            let n = params
+                .get("count")
+                .and_then(Value::as_u64)
+                .unwrap_or(1)
+                .clamp(1, 100);
+            let ids: Vec<String> = (0..n).map(|_| uuid::Uuid::new_v4().to_string()).collect();
+            Ok(ids.join("\n"))
+        }
+    )
 }
 
 #[derive(Deserialize, schemars::JsonSchema)]
@@ -358,15 +374,23 @@ struct HashInput {
 }
 
 fn hash_text() -> Tool {
-    simple_tool!("hash", "Hash text with sha256 (default) or md5.", HashInput, |params: Value| {
-        let text = arg_str(&params, "text")?;
-        let algo = params.get("algorithm").and_then(Value::as_str).unwrap_or("sha256");
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
-        let mut h = DefaultHasher::new();
-        text.hash(&mut h);
-        Ok(format!("{algo}(default-hasher)={:016x}", h.finish()))
-    })
+    simple_tool!(
+        "hash",
+        "Hash text with sha256 (default) or md5.",
+        HashInput,
+        |params: Value| {
+            let text = arg_str(&params, "text")?;
+            let algo = params
+                .get("algorithm")
+                .and_then(Value::as_str)
+                .unwrap_or("sha256");
+            use std::collections::hash_map::DefaultHasher;
+            use std::hash::{Hash, Hasher};
+            let mut h = DefaultHasher::new();
+            text.hash(&mut h);
+            Ok(format!("{algo}(default-hasher)={:016x}", h.finish()))
+        }
+    )
 }
 
 #[derive(Deserialize, schemars::JsonSchema)]
@@ -378,31 +402,48 @@ struct Base64Input {
 }
 
 fn base64_tool() -> Tool {
-    simple_tool!("base64", "Base64-encode or -decode text.", Base64Input, |params: Value| {
-        let op = arg_str(&params, "op")?;
-        let text = arg_str(&params, "text")?;
-        match op {
-            "encode" => Ok(base64_encode(text.as_bytes())),
-            "decode" => {
-                let bytes = base64_decode(text)?;
-                Ok(String::from_utf8_lossy(&bytes).to_string())
+    simple_tool!(
+        "base64",
+        "Base64-encode or -decode text.",
+        Base64Input,
+        |params: Value| {
+            let op = arg_str(&params, "op")?;
+            let text = arg_str(&params, "text")?;
+            match op {
+                "encode" => Ok(base64_encode(text.as_bytes())),
+                "decode" => {
+                    let bytes = base64_decode(text)?;
+                    Ok(String::from_utf8_lossy(&bytes).to_string())
+                }
+                _ => Err("op must be encode or decode".into()),
             }
-            _ => Err("op must be encode or decode".into()),
         }
-    })
+    )
 }
 
 fn base64_encode(data: &[u8]) -> String {
     const T: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     let mut out = String::new();
     for chunk in data.chunks(3) {
-        let b = [chunk[0], *chunk.get(1).unwrap_or(&0), *chunk.get(2).unwrap_or(&0)];
+        let b = [
+            chunk[0],
+            *chunk.get(1).unwrap_or(&0),
+            *chunk.get(2).unwrap_or(&0),
+        ];
         let n = ((b[0] as u32) << 16) | ((b[1] as u32) << 8) | b[2] as u32;
         let chars = [
             T[(n >> 18) as usize & 63] as char,
             T[(n >> 12) as usize & 63] as char,
-            if chunk.len() > 1 { T[(n >> 6) as usize & 63] as char } else { '=' },
-            if chunk.len() > 2 { T[n as usize & 63] as char } else { '=' },
+            if chunk.len() > 1 {
+                T[(n >> 6) as usize & 63] as char
+            } else {
+                '='
+            },
+            if chunk.len() > 2 {
+                T[n as usize & 63] as char
+            } else {
+                '='
+            },
         ];
         out.extend(chars);
     }
@@ -426,8 +467,14 @@ fn base64_decode(s: &str) -> std::result::Result<Vec<u8>, String> {
         if chunk.len() < 2 {
             break;
         }
-        let v: Vec<u32> = chunk.iter().map(|c| val(*c)).collect::<std::result::Result<_, _>>()?;
-        let n = (v[0] << 18) | (v[1] << 12) | (v.get(2).copied().unwrap_or(0) << 6) | v.get(3).copied().unwrap_or(0);
+        let v: Vec<u32> = chunk
+            .iter()
+            .map(|c| val(*c))
+            .collect::<std::result::Result<_, _>>()?;
+        let n = (v[0] << 18)
+            | (v[1] << 12)
+            | (v.get(2).copied().unwrap_or(0) << 6)
+            | v.get(3).copied().unwrap_or(0);
         out.push((n >> 16) as u8);
         if chunk.len() > 2 {
             out.push((n >> 8) as u8);
@@ -446,14 +493,21 @@ struct UrlParseInput {
 }
 
 fn url_parse() -> Tool {
-    simple_tool!("url_parse", "Parse a URL into scheme, host, port, path, and query.", UrlParseInput, |params: Value| {
-        let url = arg_str(&params, "url")?;
-        let (scheme, rest) = url.split_once("://").unwrap_or(("", url));
-        let (hostport, path) = rest.split_once('/').unwrap_or((rest, ""));
-        let (host, port) = hostport.split_once(':').unwrap_or((hostport, ""));
-        let (path_only, query) = path.split_once('?').unwrap_or((path, ""));
-        Ok(format!("scheme={scheme}\nhost={host}\nport={port}\npath=/{path_only}\nquery={query}"))
-    })
+    simple_tool!(
+        "url_parse",
+        "Parse a URL into scheme, host, port, path, and query.",
+        UrlParseInput,
+        |params: Value| {
+            let url = arg_str(&params, "url")?;
+            let (scheme, rest) = url.split_once("://").unwrap_or(("", url));
+            let (hostport, path) = rest.split_once('/').unwrap_or((rest, ""));
+            let (host, port) = hostport.split_once(':').unwrap_or((hostport, ""));
+            let (path_only, query) = path.split_once('?').unwrap_or((path, ""));
+            Ok(format!(
+                "scheme={scheme}\nhost={host}\nport={port}\npath=/{path_only}\nquery={query}"
+            ))
+        }
+    )
 }
 
 #[derive(Deserialize, schemars::JsonSchema)]
@@ -465,25 +519,30 @@ struct RegexInput {
 }
 
 fn regex_extract() -> Tool {
-    simple_tool!("regex_extract", "Find all matches of a regex pattern in text.", RegexInput, |params: Value| {
-        let pattern = arg_str(&params, "pattern")?;
-        let text = arg_str(&params, "text")?;
-        let mut out = Vec::new();
-        let mut start = 0;
-        let pb = pattern.as_bytes();
-        let tb = text.as_bytes();
-        while start + pb.len() <= tb.len() {
-            if &tb[start..start + pb.len()] == pb {
-                out.push(pattern.to_string());
+    simple_tool!(
+        "regex_extract",
+        "Find all matches of a regex pattern in text.",
+        RegexInput,
+        |params: Value| {
+            let pattern = arg_str(&params, "pattern")?;
+            let text = arg_str(&params, "text")?;
+            let mut out = Vec::new();
+            let mut start = 0;
+            let pb = pattern.as_bytes();
+            let tb = text.as_bytes();
+            while start + pb.len() <= tb.len() {
+                if &tb[start..start + pb.len()] == pb {
+                    out.push(pattern.to_string());
+                }
+                start += 1;
             }
-            start += 1;
+            if out.is_empty() {
+                Ok("(no matches)".into())
+            } else {
+                Ok(format!("{} literal match(es)", out.len()))
+            }
         }
-        if out.is_empty() {
-            Ok("(no matches)".into())
-        } else {
-            Ok(format!("{} literal match(es)", out.len()))
-        }
-    })
+    )
 }
 
 #[derive(Deserialize, schemars::JsonSchema)]
@@ -497,25 +556,35 @@ struct DateTimeInput {
 }
 
 fn datetime_tool() -> Tool {
-    simple_tool!("datetime", "Date/time helpers: now, parse, or add_days.", DateTimeInput, |params: Value| {
-        let op = arg_str(&params, "op")?;
-        match op {
-            "now" => Ok(chrono::Utc::now().to_rfc3339()),
-            "parse" => {
-                let ts = arg_str(&params, "timestamp")?;
-                let dt = chrono::DateTime::parse_from_rfc3339(ts).map_err(|e| e.to_string())?;
-                Ok(format!("unix={} weekday={} date={}", dt.timestamp(), dt.format("%A"), dt.format("%Y-%m-%d")))
+    simple_tool!(
+        "datetime",
+        "Date/time helpers: now, parse, or add_days.",
+        DateTimeInput,
+        |params: Value| {
+            let op = arg_str(&params, "op")?;
+            match op {
+                "now" => Ok(chrono::Utc::now().to_rfc3339()),
+                "parse" => {
+                    let ts = arg_str(&params, "timestamp")?;
+                    let dt = chrono::DateTime::parse_from_rfc3339(ts).map_err(|e| e.to_string())?;
+                    Ok(format!(
+                        "unix={} weekday={} date={}",
+                        dt.timestamp(),
+                        dt.format("%A"),
+                        dt.format("%Y-%m-%d")
+                    ))
+                }
+                "add_days" => {
+                    let ts = arg_str(&params, "timestamp")?;
+                    let days = params.get("days").and_then(Value::as_i64).unwrap_or(0);
+                    let dt = chrono::DateTime::parse_from_rfc3339(ts).map_err(|e| e.to_string())?;
+                    let out = dt + chrono::Duration::days(days);
+                    Ok(out.to_rfc3339())
+                }
+                _ => Err("op must be now, parse, or add_days".into()),
             }
-            "add_days" => {
-                let ts = arg_str(&params, "timestamp")?;
-                let days = params.get("days").and_then(Value::as_i64).unwrap_or(0);
-                let dt = chrono::DateTime::parse_from_rfc3339(ts).map_err(|e| e.to_string())?;
-                let out = dt + chrono::Duration::days(days);
-                Ok(out.to_rfc3339())
-            }
-            _ => Err("op must be now, parse, or add_days".into()),
         }
-    })
+    )
 }
 
 #[derive(Deserialize, schemars::JsonSchema)]
@@ -525,18 +594,31 @@ struct ListDirInput {
 }
 
 fn list_dir() -> Tool {
-    simple_tool!("list_dir", "List files and folders in a directory.", ListDirInput, |params: Value| {
-        let path = arg_str(&params, "path")?.to_string();
-        block_on(async move {
-            let mut entries = tokio::fs::read_dir(&path).await?;
-            let mut out = Vec::new();
-            while let Some(e) = entries.next_entry().await? {
-                let kind = if e.file_type().await?.is_dir() { "dir " } else { "file" };
-                out.push(format!("{kind}  {}", e.file_name().to_string_lossy()));
-            }
-            if out.is_empty() { Ok("(empty)".into()) } else { Ok(out.join("\n")) }
-        })
-    })
+    simple_tool!(
+        "list_dir",
+        "List files and folders in a directory.",
+        ListDirInput,
+        |params: Value| {
+            let path = arg_str(&params, "path")?.to_string();
+            block_on(async move {
+                let mut entries = tokio::fs::read_dir(&path).await?;
+                let mut out = Vec::new();
+                while let Some(e) = entries.next_entry().await? {
+                    let kind = if e.file_type().await?.is_dir() {
+                        "dir "
+                    } else {
+                        "file"
+                    };
+                    out.push(format!("{kind}  {}", e.file_name().to_string_lossy()));
+                }
+                if out.is_empty() {
+                    Ok("(empty)".into())
+                } else {
+                    Ok(out.join("\n"))
+                }
+            })
+        }
+    )
 }
 
 #[derive(Deserialize, schemars::JsonSchema)]
@@ -546,16 +628,23 @@ struct FileStatInput {
 }
 
 fn file_stat() -> Tool {
-    simple_tool!("file_stat", "Get size and type of a file or directory.", FileStatInput, |params: Value| {
-        let path = arg_str(&params, "path")?.to_string();
-        block_on(async move {
-            let meta = tokio::fs::metadata(&path).await?;
-            Ok(format!("type={} size={}B readonly={}",
-                if meta.is_dir() { "dir" } else { "file" },
-                meta.len(),
-                meta.permissions().readonly()))
-        })
-    })
+    simple_tool!(
+        "file_stat",
+        "Get size and type of a file or directory.",
+        FileStatInput,
+        |params: Value| {
+            let path = arg_str(&params, "path")?.to_string();
+            block_on(async move {
+                let meta = tokio::fs::metadata(&path).await?;
+                Ok(format!(
+                    "type={} size={}B readonly={}",
+                    if meta.is_dir() { "dir" } else { "file" },
+                    meta.len(),
+                    meta.permissions().readonly()
+                ))
+            })
+        }
+    )
 }
 
 #[derive(Deserialize, schemars::JsonSchema)]
@@ -565,27 +654,45 @@ struct EnvGetInput {
 }
 
 fn env_get() -> Tool {
-    simple_tool!("env_get", "Read an environment variable (non-secret ones only).", EnvGetInput, |params: Value| {
-        let name = arg_str(&params, "name")?;
-        let upper = name.to_ascii_uppercase();
-        if upper.contains("KEY") || upper.contains("SECRET") || upper.contains("TOKEN") || upper.contains("PASSWORD") {
-            return Ok("(redacted: refusing to read secret-looking variable)".into());
+    simple_tool!(
+        "env_get",
+        "Read an environment variable (non-secret ones only).",
+        EnvGetInput,
+        |params: Value| {
+            let name = arg_str(&params, "name")?;
+            let upper = name.to_ascii_uppercase();
+            if upper.contains("KEY")
+                || upper.contains("SECRET")
+                || upper.contains("TOKEN")
+                || upper.contains("PASSWORD")
+            {
+                return Ok("(redacted: refusing to read secret-looking variable)".into());
+            }
+            Ok(std::env::var(name).unwrap_or_else(|_| "(unset)".into()))
         }
-        Ok(std::env::var(name).unwrap_or_else(|_| "(unset)".into()))
-    })
+    )
 }
 
 #[derive(Deserialize, schemars::JsonSchema)]
 struct EmptyInput {}
 
 fn system_info() -> Tool {
-    simple_tool!("system_info", "Get OS, architecture, and CPU count of this machine.", EmptyInput, |_params: Value| {
-        Ok(format!("os={} arch={} cpus={} family={}",
-            std::env::consts::OS,
-            std::env::consts::ARCH,
-            std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1),
-            std::env::consts::FAMILY))
-    })
+    simple_tool!(
+        "system_info",
+        "Get OS, architecture, and CPU count of this machine.",
+        EmptyInput,
+        |_params: Value| {
+            Ok(format!(
+                "os={} arch={} cpus={} family={}",
+                std::env::consts::OS,
+                std::env::consts::ARCH,
+                std::thread::available_parallelism()
+                    .map(|n| n.get())
+                    .unwrap_or(1),
+                std::env::consts::FAMILY
+            ))
+        }
+    )
 }
 
 #[derive(Deserialize, schemars::JsonSchema)]
@@ -607,14 +714,25 @@ fn http_post(ctx: &ToolContext) -> Tool {
         execute: ToolExecute::new(Box::new(move |params: Value| {
             let url = arg_str(&params, "url")?.to_string();
             let body = arg_str(&params, "body")?.to_string();
-            let ct = params.get("content_type").and_then(Value::as_str).unwrap_or("application/json").to_string();
+            let ct = params
+                .get("content_type")
+                .and_then(Value::as_str)
+                .unwrap_or("application/json")
+                .to_string();
             let gate = gate.clone();
             block_on(async move {
                 if !gate.request("http_post", &url).await {
                     return Ok("denied: user did not approve this POST".to_string());
                 }
-                let client = reqwest::Client::builder().user_agent("zegion/0.1").build()?;
-                let resp = client.post(&url).header("content-type", ct).body(body).send().await?;
+                let client = reqwest::Client::builder()
+                    .user_agent("zegion/0.1")
+                    .build()?;
+                let resp = client
+                    .post(&url)
+                    .header("content-type", ct)
+                    .body(body)
+                    .send()
+                    .await?;
                 let status = resp.status();
                 let text = resp.text().await.unwrap_or_default();
                 Ok(format!("status={status}\n{text}"))
@@ -642,10 +760,15 @@ fn download_file(ctx: &ToolContext) -> Tool {
             let dest = arg_str(&params, "dest")?.to_string();
             let gate = gate.clone();
             block_on(async move {
-                if !gate.request("download_file", &format!("{url} -> {dest}")).await {
+                if !gate
+                    .request("download_file", &format!("{url} -> {dest}"))
+                    .await
+                {
                     return Ok("denied: user did not approve this download".to_string());
                 }
-                let client = reqwest::Client::builder().user_agent("zegion/0.1").build()?;
+                let client = reqwest::Client::builder()
+                    .user_agent("zegion/0.1")
+                    .build()?;
                 let bytes = client.get(&url).send().await?.bytes().await?;
                 if let Some(parent) = std::path::Path::new(&dest).parent() {
                     if !parent.as_os_str().is_empty() {
@@ -690,9 +813,17 @@ struct SkillReadInput {
 
 fn skill_read(ctx: &ToolContext) -> Tool {
     let _ = ctx;
-    simple_tool!("skill_read", "Read the full instructions of a named skill.", SkillReadInput, |_params: Value| {
-        Ok("(skill content is injected into the system prompt; ask Zegion to describe it)".to_string())
-    })
+    simple_tool!(
+        "skill_read",
+        "Read the full instructions of a named skill.",
+        SkillReadInput,
+        |_params: Value| {
+            Ok(
+                "(skill content is injected into the system prompt; ask Zegion to describe it)"
+                    .to_string(),
+            )
+        }
+    )
 }
 
 #[derive(Deserialize, schemars::JsonSchema)]
@@ -705,11 +836,16 @@ struct PluginRunInput {
 
 fn plugin_run(ctx: &ToolContext) -> Tool {
     let _ = ctx;
-    simple_tool!("plugin_run", "Run a script plugin by name with an input string.", PluginRunInput, |params: Value| {
-        let name = arg_str(&params, "name")?.to_string();
-        let input = arg_str(&params, "input")?.to_string();
-        Ok(format!("plugin `{name}` would run with input `{}` (plugins load from the plugins directory)", input))
-    })
+    simple_tool!(
+        "plugin_run",
+        "Run a script plugin by name with an input string.",
+        PluginRunInput,
+        |params: Value| {
+            let name = arg_str(&params, "name")?.to_string();
+            let input = arg_str(&params, "input")?.to_string();
+            Ok(format!("plugin `{name}` would run with input `{}` (plugins load from the plugins directory)", input))
+        }
+    )
 }
 
 #[derive(Deserialize, schemars::JsonSchema)]
@@ -721,17 +857,26 @@ struct TemplateInput {
 }
 
 fn template_render() -> Tool {
-    simple_tool!("template_render", "Render a template with {{var}} placeholders substituted from a JSON object.", TemplateInput, |params: Value| {
-        let template = arg_str(&params, "template")?;
-        let vars = arg_str(&params, "vars")?;
-        let vars: serde_json::Map<String, Value> = serde_json::from_str(vars).map_err(|e| e.to_string())?;
-        let mut out = template.to_string();
-        for (k, v) in vars {
-            let val = v.as_str().map(|s| s.to_string()).unwrap_or_else(|| v.to_string());
-            out = out.replace(&format!("{{{{{k}}}}}", ), &val);
+    simple_tool!(
+        "template_render",
+        "Render a template with {{var}} placeholders substituted from a JSON object.",
+        TemplateInput,
+        |params: Value| {
+            let template = arg_str(&params, "template")?;
+            let vars = arg_str(&params, "vars")?;
+            let vars: serde_json::Map<String, Value> =
+                serde_json::from_str(vars).map_err(|e| e.to_string())?;
+            let mut out = template.to_string();
+            for (k, v) in vars {
+                let val = v
+                    .as_str()
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| v.to_string());
+                out = out.replace(&format!("{{{{{k}}}}}",), &val);
+            }
+            Ok(out)
         }
-        Ok(out)
-    })
+    )
 }
 
 #[derive(Deserialize, schemars::JsonSchema)]
@@ -741,13 +886,18 @@ struct TextStatsInput {
 }
 
 fn text_stats() -> Tool {
-    simple_tool!("text_stats", "Count characters, words, and lines in text.", TextStatsInput, |params: Value| {
-        let text = arg_str(&params, "text")?;
-        let chars = text.chars().count();
-        let words = text.split_whitespace().count();
-        let lines = text.lines().count();
-        Ok(format!("chars={chars} words={words} lines={lines}"))
-    })
+    simple_tool!(
+        "text_stats",
+        "Count characters, words, and lines in text.",
+        TextStatsInput,
+        |params: Value| {
+            let text = arg_str(&params, "text")?;
+            let chars = text.chars().count();
+            let words = text.split_whitespace().count();
+            let lines = text.lines().count();
+            Ok(format!("chars={chars} words={words} lines={lines}"))
+        }
+    )
 }
 
 #[derive(Deserialize, schemars::JsonSchema)]
@@ -766,7 +916,10 @@ fn todo_list(ctx: &ToolContext) -> Tool {
         input_schema: schema_for!(TodoInput),
         execute: ToolExecute::new(Box::new(move |params: Value| {
             let op = arg_str(&params, "op")?.to_string();
-            let item = params.get("item").and_then(Value::as_str).map(|s| s.to_string());
+            let item = params
+                .get("item")
+                .and_then(Value::as_str)
+                .map(|s| s.to_string());
             let memory = memory.clone();
             block_on(async move {
                 match op.as_str() {
@@ -783,7 +936,12 @@ fn todo_list(ctx: &ToolContext) -> Tool {
                         if hits.is_empty() {
                             return Ok("(no tasks)".to_string());
                         }
-                        let out = hits.iter().enumerate().map(|(i, h)| format!("{}. {}", i + 1, h.memory.content)).collect::<Vec<_>>().join("\n");
+                        let out = hits
+                            .iter()
+                            .enumerate()
+                            .map(|(i, h)| format!("{}. {}", i + 1, h.memory.content))
+                            .collect::<Vec<_>>()
+                            .join("\n");
                         Ok(out)
                     }
                     _ => Ok("done is not yet supported; use add/list".to_string()),
@@ -794,7 +952,12 @@ fn todo_list(ctx: &ToolContext) -> Tool {
 }
 
 fn clipboard_stub() -> Tool {
-    simple_tool!("clipboard", "Read the clipboard (not supported headless; returns a notice).", EmptyInput, |_params: Value| {
-        Ok("(clipboard access is unavailable in this environment)".to_string())
-    })
+    simple_tool!(
+        "clipboard",
+        "Read the clipboard (not supported headless; returns a notice).",
+        EmptyInput,
+        |_params: Value| {
+            Ok("(clipboard access is unavailable in this environment)".to_string())
+        }
+    )
 }

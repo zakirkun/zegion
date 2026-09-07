@@ -55,7 +55,10 @@ impl<M: LanguageModel> Pipeline<M> {
         self
     }
 
-    pub async fn generate_optimized(&self, options: LanguageModelOptions) -> aisdk::Result<LanguageModelResponse> {
+    pub async fn generate_optimized(
+        &self,
+        options: LanguageModelOptions,
+    ) -> aisdk::Result<LanguageModelResponse> {
         let fingerprint = fingerprint(&options);
 
         if let (Some(cache), Some(key)) = (&self.cache, fingerprint) {
@@ -74,7 +77,10 @@ impl<M: LanguageModel> Pipeline<M> {
         }
 
         let attempts = self.retry.map(|r| r.max_attempts).unwrap_or(1).max(1);
-        let mut delay = self.retry.map(|r| r.initial_backoff).unwrap_or(Duration::ZERO);
+        let mut delay = self
+            .retry
+            .map(|r| r.initial_backoff)
+            .unwrap_or(Duration::ZERO);
         let mut last_err = None;
         let mut response = None;
         for attempt in 1..=attempts {
@@ -96,7 +102,11 @@ impl<M: LanguageModel> Pipeline<M> {
 
         let response = match response {
             Some(r) => r,
-            None => return Err(last_err.unwrap_or_else(|| aisdk::Error::Other("llm call failed".into()))),
+            None => {
+                return Err(
+                    last_err.unwrap_or_else(|| aisdk::Error::Other("llm call failed".into()))
+                )
+            }
         };
 
         if let Some(rails) = &self.guardrails {
@@ -165,11 +175,21 @@ impl ResponseCache {
     fn put(&self, key: u64, response: LanguageModelResponse) {
         let mut map = self.map.lock();
         if map.len() >= self.cap {
-            if let Some(oldest) = map.iter().max_by_key(|(_, e)| e.at.elapsed()).map(|(k, _)| *k) {
+            if let Some(oldest) = map
+                .iter()
+                .max_by_key(|(_, e)| e.at.elapsed())
+                .map(|(k, _)| *k)
+            {
                 map.remove(&oldest);
             }
         }
-        map.insert(key, CacheEntry { response, at: Instant::now() });
+        map.insert(
+            key,
+            CacheEntry {
+                response,
+                at: Instant::now(),
+            },
+        );
     }
 }
 
@@ -182,14 +202,10 @@ fn fingerprint(options: &LanguageModelOptions) -> Option<u64> {
 }
 
 fn last_user_text(options: &LanguageModelOptions) -> Option<String> {
-    options
-        .messages()
-        .iter()
-        .rev()
-        .find_map(|m| match m {
-            aisdk::core::Message::User(u) => Some(u.content.clone()),
-            _ => None,
-        })
+    options.messages().iter().rev().find_map(|m| match m {
+        aisdk::core::Message::User(u) => Some(u.content.clone()),
+        _ => None,
+    })
 }
 
 fn response_text(response: &LanguageModelResponse) -> Option<String> {

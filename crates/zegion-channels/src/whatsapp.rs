@@ -80,7 +80,8 @@ impl Channel for WhatsAppChannel {
         let app = Router::new()
             .route("/webhook/whatsapp", get(verify).post(receive))
             .with_state(state);
-        let bind = std::env::var("ZEGION_WHATSAPP_BIND").unwrap_or_else(|_| "127.0.0.1:8790".into());
+        let bind =
+            std::env::var("ZEGION_WHATSAPP_BIND").unwrap_or_else(|_| "127.0.0.1:8790".into());
         let listener = tokio::net::TcpListener::bind(&bind).await?;
         tracing::info!("whatsapp webhook listening on http://{bind}/webhook/whatsapp");
         tokio::spawn(async move {
@@ -115,15 +116,23 @@ struct VerifyQuery {
     challenge: Option<String>,
 }
 
-async fn verify(State(state): State<WebhookState>, Query(q): Query<VerifyQuery>) -> impl IntoResponse {
-    if q.mode.as_deref() == Some("subscribe") && q.token.as_deref() == Some(state.verify_token.as_str()) {
+async fn verify(
+    State(state): State<WebhookState>,
+    Query(q): Query<VerifyQuery>,
+) -> impl IntoResponse {
+    if q.mode.as_deref() == Some("subscribe")
+        && q.token.as_deref() == Some(state.verify_token.as_str())
+    {
         (StatusCode::OK, q.challenge.unwrap_or_default()).into_response()
     } else {
         StatusCode::FORBIDDEN.into_response()
     }
 }
 
-async fn receive(State(state): State<WebhookState>, Json(body): Json<serde_json::Value>) -> StatusCode {
+async fn receive(
+    State(state): State<WebhookState>,
+    Json(body): Json<serde_json::Value>,
+) -> StatusCode {
     for entry in body["entry"].as_array().into_iter().flatten() {
         for change in entry["changes"].as_array().into_iter().flatten() {
             let value = &change["value"];
@@ -132,7 +141,11 @@ async fn receive(State(state): State<WebhookState>, Json(body): Json<serde_json:
                     continue;
                 }
                 let from = message["from"].as_str().unwrap_or("").to_string();
-                let text = message["text"]["body"].as_str().unwrap_or("").trim().to_string();
+                let text = message["text"]["body"]
+                    .as_str()
+                    .unwrap_or("")
+                    .trim()
+                    .to_string();
                 if from.is_empty() || text.is_empty() {
                     continue;
                 }

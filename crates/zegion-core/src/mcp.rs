@@ -108,9 +108,7 @@ fn wrap_mcp_tool(conn: Arc<McpConnection>, tool: rmcp::model::Tool) -> Tool {
             Err(e) => return Err(format!("no tokio runtime for mcp tool: {e}")),
         };
         tokio::task::block_in_place(|| {
-            handle.block_on(async move {
-                call_mcp_tool(&conn, &server_tool_name, params).await
-            })
+            handle.block_on(async move { call_mcp_tool(&conn, &server_tool_name, params).await })
         })
     }));
 

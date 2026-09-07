@@ -21,7 +21,11 @@ async fn discovers_and_calls_mcp_tool() {
     let tools = registry.discover_tools().await;
     assert!(!tools.is_empty(), "should discover at least one tool");
     for t in &tools {
-        assert!(t.name.starts_with("everything__"), "tool namespaced: {}", t.name);
+        assert!(
+            t.name.starts_with("everything__"),
+            "tool namespaced: {}",
+            t.name
+        );
     }
 
     // The reference "everything" server exposes an `echo` tool.

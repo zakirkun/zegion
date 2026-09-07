@@ -1,6 +1,8 @@
 use std::sync::Arc;
 
-use zegion_core::guardrails::{default_guardrails, Direction, Guardrail, SensitiveDataGuardrail, Verdict};
+use zegion_core::guardrails::{
+    default_guardrails, Direction, Guardrail, SensitiveDataGuardrail, Verdict,
+};
 use zegion_core::orchestrator::{AgentBus, AgentParticipant, Environment};
 use zegion_core::sandbox::{SandboxLimits, WasmTool};
 use zegion_memory::SlidingWindow;
@@ -39,7 +41,9 @@ fn guardrail_set_allows_clean_text() {
 #[test]
 fn guardrail_set_blocks_secret_in_output() {
     let set = default_guardrails();
-    assert!(set.check_output("your key is -----BEGIN RSA PRIVATE abc").is_err());
+    assert!(set
+        .check_output("your key is -----BEGIN RSA PRIVATE abc")
+        .is_err());
 }
 
 // ---- WASM sandbox ----
@@ -82,7 +86,10 @@ const WAT_INFINITE_LOOP: &str = r#"
 fn wasm_sandbox_fuel_cap_stops_infinite_loop() {
     let tool = WasmTool::compile(
         WAT_INFINITE_LOOP,
-        SandboxLimits { fuel: 10_000, max_memory_bytes: 1024 * 1024 },
+        SandboxLimits {
+            fuel: 10_000,
+            max_memory_bytes: 1024 * 1024,
+        },
     )
     .expect("compiles");
     let result = tool.invoke("x");

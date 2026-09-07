@@ -249,7 +249,9 @@ impl MemoryStore {
         self.with_conn(move |conn| {
             let n = conn.execute("DELETE FROM memories WHERE kind = 'episodic'", [])?;
             // Rebuild FTS to drop removed rows.
-            conn.execute_batch("DELETE FROM memories_fts WHERE content NOT IN (SELECT content FROM memories);")?;
+            conn.execute_batch(
+                "DELETE FROM memories_fts WHERE content NOT IN (SELECT content FROM memories);",
+            )?;
             Ok(n)
         })
         .await
@@ -281,7 +283,11 @@ impl crate::backend::MemoryBackend for MemoryStore {
     async fn recall_keyword(&self, query: &str, limit: usize) -> Result<Vec<ScoredMemory>> {
         MemoryStore::recall_keyword(self, query, limit).await
     }
-    async fn recall_vector(&self, query_embedding: Vec<f32>, limit: usize) -> Result<Vec<ScoredMemory>> {
+    async fn recall_vector(
+        &self,
+        query_embedding: Vec<f32>,
+        limit: usize,
+    ) -> Result<Vec<ScoredMemory>> {
         MemoryStore::recall_vector(self, query_embedding, limit).await
     }
     async fn recent_episodic(&self, limit: usize) -> Result<Vec<Memory>> {

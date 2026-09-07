@@ -78,8 +78,11 @@ impl Default for SensitiveDataGuardrail {
     fn default() -> Self {
         Self {
             patterns: vec![
-                "-----BEGIN", "PRIVATE KEY-----", "aws_secret_access_key",
-                "BEGIN RSA PRIVATE", "BEGIN OPENSSH PRIVATE",
+                "-----BEGIN",
+                "PRIVATE KEY-----",
+                "aws_secret_access_key",
+                "BEGIN RSA PRIVATE",
+                "BEGIN OPENSSH PRIVATE",
             ],
         }
     }
@@ -111,7 +114,11 @@ impl Guardrail for LengthGuardrail {
     }
     fn inspect(&self, text: &str, _direction: Direction) -> Verdict {
         if text.len() > self.max_chars {
-            Verdict::Flag(format!("length {} exceeds soft cap {}", text.len(), self.max_chars))
+            Verdict::Flag(format!(
+                "length {} exceeds soft cap {}",
+                text.len(),
+                self.max_chars
+            ))
         } else {
             Verdict::Allow
         }

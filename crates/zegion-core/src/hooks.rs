@@ -12,7 +12,11 @@ pub struct ApprovalGate {
 }
 
 impl ApprovalGate {
-    pub fn new(security: SecurityConfig, channel: Option<Arc<dyn Channel>>, user_id: String) -> Self {
+    pub fn new(
+        security: SecurityConfig,
+        channel: Option<Arc<dyn Channel>>,
+        user_id: String,
+    ) -> Self {
         Self {
             security,
             channel,
@@ -39,7 +43,9 @@ impl ApprovalGate {
         }
         if let Some(ch) = &self.channel {
             let prompt = format!("Zegion wants to run `{tool_name}`: {detail}\nAllow? (yes/no)");
-            ch.ask_approval(&self.user_id, &prompt).await.unwrap_or(false)
+            ch.ask_approval(&self.user_id, &prompt)
+                .await
+                .unwrap_or(false)
         } else {
             false
         }

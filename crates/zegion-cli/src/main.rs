@@ -53,7 +53,10 @@ async fn main() -> anyhow::Result<()> {
     let cfg_path = if std::path::Path::new(&cli.config).exists() {
         cli.config.clone()
     } else if std::path::Path::new("zegion.example.toml").exists() {
-        eprintln!("[zegion] {} not found; using zegion.example.toml", cli.config);
+        eprintln!(
+            "[zegion] {} not found; using zegion.example.toml",
+            cli.config
+        );
         "zegion.example.toml".to_string()
     } else {
         cli.config.clone()
@@ -68,7 +71,10 @@ async fn main() -> anyhow::Result<()> {
         Commands::Learn { fact } => {
             let agent = Agent::new(config).await?;
             let agent = agent.read().await;
-            agent.learn(&fact, 0.8).await.map_err(|e| anyhow::anyhow!("{e}"))?;
+            agent
+                .learn(&fact, 0.8)
+                .await
+                .map_err(|e| anyhow::anyhow!("{e}"))?;
             println!("learned: {fact}");
         }
         Commands::Recall { query } => {
@@ -206,7 +212,9 @@ async fn run(config: Config) -> anyhow::Result<()> {
                     channels.insert("whatsapp".into(), std::sync::Arc::new(chan));
                     println!("whatsapp channel enabled");
                 }
-                _ => eprintln!("whatsapp enabled but phone_number_id/access_token/verify_token missing"),
+                _ => eprintln!(
+                    "whatsapp enabled but phone_number_id/access_token/verify_token missing"
+                ),
             }
         }
     }

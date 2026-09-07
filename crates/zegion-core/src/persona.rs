@@ -12,9 +12,9 @@ pub struct Persona {
 impl Persona {
     pub async fn load(path: impl AsRef<Path>) -> Result<Self> {
         let path = path.as_ref();
-        let raw = tokio::fs::read_to_string(path)
-            .await
-            .map_err(|e| Error::Config(format!("cannot read persona file {}: {e}", path.display())))?;
+        let raw = tokio::fs::read_to_string(path).await.map_err(|e| {
+            Error::Config(format!("cannot read persona file {}: {e}", path.display()))
+        })?;
         let name = extract_name(&raw).unwrap_or_else(|| "Zegion".to_string());
         Ok(Self {
             raw_markdown: raw,

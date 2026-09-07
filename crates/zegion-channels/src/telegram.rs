@@ -1,6 +1,6 @@
 use async_trait::async_trait;
-use teloxide::prelude::*;
 use futures::StreamExt;
+use teloxide::prelude::*;
 use teloxide::types::{ChatId, UpdateKind};
 use teloxide::update_listeners::{polling_default, AsUpdateStream};
 use tokio::sync::mpsc;
@@ -53,7 +53,10 @@ impl Channel for TelegramChannel {
                         _ => continue,
                     };
                     let (user_id, user_name) = match &msg.from {
-                        Some(u) => (u.id.0.to_string(), u.username.clone().or(Some(u.first_name.clone()))),
+                        Some(u) => (
+                            u.id.0.to_string(),
+                            u.username.clone().or(Some(u.first_name.clone())),
+                        ),
                         None => (msg.chat.id.0.to_string(), None),
                     };
                     let mut im = IncomingMessage::new("telegram", user_id, text);
@@ -95,7 +98,11 @@ impl Channel for TelegramChannel {
             .parse()
             .map_err(|_| Error::Channel(format!("invalid telegram message id `{handle}`")))?;
         let trimmed: String = text.chars().take(4000).collect();
-        let content = if trimmed.is_empty() { "…".to_string() } else { trimmed };
+        let content = if trimmed.is_empty() {
+            "…".to_string()
+        } else {
+            trimmed
+        };
         // Editing to identical content errors; treat it as a no-op.
         match self
             .bot

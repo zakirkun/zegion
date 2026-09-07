@@ -17,7 +17,11 @@ pub struct IncomingMessage {
 }
 
 impl IncomingMessage {
-    pub fn new(channel: impl Into<String>, user_id: impl Into<String>, text: impl Into<String>) -> Self {
+    pub fn new(
+        channel: impl Into<String>,
+        user_id: impl Into<String>,
+        text: impl Into<String>,
+    ) -> Self {
         Self {
             id: Uuid::new_v4(),
             channel: channel.into(),

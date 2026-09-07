@@ -111,9 +111,11 @@ pub fn wasm_aisdk_tool(
         name: name_string.clone(),
         description: description.to_string(),
         input_schema,
-        execute: aisdk::core::tools::ToolExecute::new(Box::new(move |params: serde_json::Value| {
-            let input = params.to_string();
-            tool.invoke(&input).map_err(|e| e.to_string())
-        })),
+        execute: aisdk::core::tools::ToolExecute::new(Box::new(
+            move |params: serde_json::Value| {
+                let input = params.to_string();
+                tool.invoke(&input).map_err(|e| e.to_string())
+            },
+        )),
     }
 }

@@ -21,15 +21,26 @@ async fn autoloads_all_skills_from_disk() {
 
 #[tokio::test]
 async fn autoloads_all_plugins_from_disk() {
-    let plugins = PluginRegistry::load_from_dir("../../plugins").await.unwrap();
+    let plugins = PluginRegistry::load_from_dir("../../plugins")
+        .await
+        .unwrap();
     assert!(
         plugins.scripts.len() >= 10,
         "expected >=10 plugins, found {}",
         plugins.scripts.len()
     );
     let names = plugins.names();
-    for expected in ["slugify", "reverse", "word_count", "sort_lines", "csv_to_table"] {
-        assert!(names.iter().any(|n| n == expected), "missing plugin {expected}");
+    for expected in [
+        "slugify",
+        "reverse",
+        "word_count",
+        "sort_lines",
+        "csv_to_table",
+    ] {
+        assert!(
+            names.iter().any(|n| n == expected),
+            "missing plugin {expected}"
+        );
     }
 }
 
@@ -49,7 +60,10 @@ fn rhai_plugins_execute() {
         ("slugify", "Hello World! Rust"),
         ("sort_lines", "banana\napple\ncherry"),
         ("dedupe_lines", "a\nb\na\nc"),
-        ("wrap", "one two three four five six seven eight nine ten eleven twelve thirteen"),
+        (
+            "wrap",
+            "one two three four five six seven eight nine ten eleven twelve thirteen",
+        ),
         ("censor", "contact me at bob@example.com now"),
         ("csv_to_table", "name,age\nalice,30\nbob,25"),
         ("hello", "hi"),
