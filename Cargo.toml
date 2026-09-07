@@ -1,0 +1,79 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/zegion-core",
+    "crates/zegion-memory",
+    "crates/zegion-channels",
+    "crates/zegion-cli",
+    "crates/zegion-macros",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+license = "MIT"
+repository = "https://github.com/you/zegion"
+
+[workspace.dependencies]
+# Internal
+zegion-core = { path = "crates/zegion-core" }
+zegion-memory = { path = "crates/zegion-memory" }
+zegion-channels = { path = "crates/zegion-channels" }
+
+# AI
+aisdk = { version = "0.5", features = ["openai", "anthropic", "google", "openrouter", "openaicompatible"] }
+
+# Async
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "time", "fs", "process", "io-std", "io-util"] }
+async-trait = "0.1"
+futures = "0.3"
+tokio-stream = "0.1"
+tokio-util = "0.7"
+
+# Storage
+rusqlite = { version = "0.32", features = ["bundled"] }
+sqlite-vec = "0.1"
+serde_json = "1"
+
+# Serialization / config
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+schemars = "1"
+
+# Web / gateway
+axum = "0.7"
+tower-http = { version = "0.5", features = ["cors"] }
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+tokio-tungstenite = { version = "0.24", features = ["rustls-tls-webpki-roots"] }
+serenity = { version = "0.12", default-features = false, features = ["client", "gateway", "model", "http", "rustls_backend"] }
+teloxide = { version = "0.17", features = ["macros"] }
+
+# Plugins
+rhai = { version = "1", features = ["serde"] }
+rmcp = { version = "3", default-features = false, features = ["client", "transport-child-process", "which-command"] }
+wasmtime = { version = "41", default-features = false, features = ["runtime", "cranelift", "wat", "std"] }
+
+# Utils
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+meval = "0.2"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+anyhow = "1"
+thiserror = "2"
+clap = { version = "4", features = ["derive"] }
+rustyline = "14"
+ratatui = "0.29"
+crossterm = { version = "0.28", features = ["event-stream"] }
+figlet-rs = "1.0"
+dotenvy = "0.15"
+dirs = "5"
+parking_lot = "0.12"
+
+[profile.release]
+opt-level = 2        # balance binary size vs speed for low-spec
+lto = "thin"
+codegen-units = 1
+strip = true
+panic = "abort"

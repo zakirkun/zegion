@@ -1,0 +1,99 @@
+# Zegion configuration. Copy to `zegion.toml` and fill in secrets (or use env vars).
+# Env vars take precedence over values here.
+
+[agent]
+name = "Zegion"
+persona_path = "PERSONAL.md"
+max_steps = 12                  # hard cap on agent loop steps per turn
+temperature = 40                # 0-100 (scaled to 0.0-1.0 by aisdk)
+
+[models]
+# Default provider/model used for the main conversation loop.
+# Providers: "openrouter", "openai", "anthropic", "google", "ollama", "openai-compatible"
+default_provider = "openrouter"
+default_model = "google/gemini-2.0-flash-001"
+
+# Cheap/fast model for background jobs (memory consolidation, reflection, tagging).
+worker_model = "google/gemini-2.0-flash-lite-001"
+
+# Model used to produce embeddings for memory recall.
+embedding_provider = "openai"
+embedding_model = "text-embedding-3-small"
+
+[providers.openrouter]
+api_key = "${OPENROUTER_API_KEY}"
+
+[providers.openai]
+api_key = "${OPENAI_API_KEY}"
+
+[providers.anthropic]
+api_key = "${ANTHROPIC_API_KEY}"
+
+[providers.google]
+api_key = "${GOOGLE_API_KEY}"
+
+[providers.ollama]
+base_url = "http://localhost:11434/v1"   # OpenAI-compatible
+api_key = "ollama"
+
+# Generic OpenAI-compatible endpoint (LM Studio, vLLM, Together, Groq, ...)
+# [providers.custom]
+# base_url = "http://localhost:1234/v1"
+# api_key = "${CUSTOM_API_KEY}"
+
+[memory]
+db_path = "data/zegion.db"
+# How many recalled memories to inject into context.
+recall_top_k = 8
+# Similarity threshold (0..1) for vector recall.
+recall_min_score = 0.35
+# Keep this many raw conversation turns before episodic summarization kicks in.
+raw_turn_window = 24
+
+[security]
+# When true, sensitive tools require explicit user approval in-chat.
+supervised = true
+# Tools that always require approval when supervised = true.
+require_approval = ["shell", "write_file", "http_post"]
+# Per-day soft spend cap in USD (0 = unlimited). Estimation only.
+daily_spend_cap_usd = 1.0
+
+[channels.cli]
+enabled = true
+
+[channels.gateway]
+enabled = true
+bind = "127.0.0.1:8787"
+
+# [channels.telegram]
+# enabled = false
+# bot_token = "${TELEGRAM_BOT_TOKEN}"
+
+# [channels.discord]
+# enabled = false
+# bot_token = "${DISCORD_BOT_TOKEN}"
+
+# [channels.slack]
+# enabled = false
+# bot_token = "${SLACK_BOT_TOKEN}"
+# app_token = "${SLACK_APP_TOKEN}"
+
+# [channels.whatsapp]
+# enabled = false
+# phone_number_id = "${WA_PHONE_NUMBER_ID}"
+# access_token = "${WA_ACCESS_TOKEN}"
+# verify_token = "zegion-verify"
+
+[plugins]
+dir = "plugins"
+# MCP servers to launch as child processes. Their tools are auto-discovered at
+# startup and exposed to the agent namespaced as `<name>__<tool>`.
+# [[plugins.mcp]]
+# name = "filesystem"
+# command = "npx"
+# args = ["-y", "@modelcontextprotocol/server-filesystem", "."]
+#
+# [[plugins.mcp]]
+# name = "everything"
+# command = "npx"
+# args = ["-y", "@modelcontextprotocol/server-everything"]

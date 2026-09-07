@@ -1,0 +1,35 @@
+[package]
+name = "zegion-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Zegion agent core: persona, config, agent loop, skills, tools, plugins, gateway"
+
+[dependencies]
+zegion-memory = { workspace = true }
+
+aisdk = { workspace = true }
+tokio = { workspace = true }
+async-trait = { workspace = true }
+futures = { workspace = true }
+tokio-stream = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }
+schemars = { workspace = true }
+axum = { workspace = true }
+tower-http = { workspace = true }
+reqwest = { workspace = true }
+rhai = { workspace = true }
+rmcp = { workspace = true }
+wasmtime = { workspace = true }
+zegion-macros = { path = "../zegion-macros" }
+uuid = { workspace = true }
+chrono = { workspace = true }
+meval = { workspace = true }
+tracing = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+dotenvy = { workspace = true }
+dirs = { workspace = true }
+parking_lot = { workspace = true }

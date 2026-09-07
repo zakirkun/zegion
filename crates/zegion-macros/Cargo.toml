@@ -1,0 +1,15 @@
+[package]
+name = "zegion-macros"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Derive/attribute macros for Zegion tools and outputs"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+aisdk-macros = "0.3"
+proc-macro2 = "1"
+quote = "1"
+syn = { version = "2", features = ["full"] }

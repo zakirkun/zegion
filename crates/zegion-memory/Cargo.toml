@@ -1,0 +1,19 @@
+[package]
+name = "zegion-memory"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Zegion memory: SQLite + sqlite-vec + FTS5 episodic/semantic/reflection store"
+
+[dependencies]
+tokio = { workspace = true }
+async-trait = { workspace = true }
+rusqlite = { workspace = true }
+sqlite-vec = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+tracing = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }

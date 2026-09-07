@@ -1,0 +1,26 @@
+/target
+**/*.rs.bk
+Cargo.lock
+
+# Tooling / session state
+.codegraph/
+.omo/
+
+# Runtime data
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Secrets / local config
+.env
+zegion.toml
+!zegion.example.toml
+
+# User plugins / skills written by the agent at runtime
+plugins/*.log
+
+# OS
+.DS_Store
+Thumbs.db
