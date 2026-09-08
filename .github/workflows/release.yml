@@ -71,12 +71,11 @@ jobs:
       - name: Create release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          TAG="${GITHUB_REF#refs/tags/}"
           cd dist
           echo "Artifacts:"; ls -la
-          gh release create "$TAG" \
-            --title "Zegion $TAG" \
-            --generate-notes \
-            zegion-*.tar.gz zegion-*.zip
+          FILES=$(ls zegion-*.tar.gz zegion-*.zip)
+          echo "Uploading: $FILES"
+          gh release create "$TAG" --title "Zegion $TAG" --generate-notes $FILES
